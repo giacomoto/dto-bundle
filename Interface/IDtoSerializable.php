@@ -2,5 +2,5 @@
 
 namespace Luckyseven\Bundle\LuckysevenDtoBundle\Interface;
 
-interface DtoSerializableInterface {
+interface IDtoSerializable {
 }

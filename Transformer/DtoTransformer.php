@@ -2,9 +2,9 @@
 
 namespace Luckyseven\Bundle\LuckysevenDtoBundle\Transformer;
 
-use Luckyseven\Bundle\LuckysevenDtoBundle\Interface\DtoTransformerInterface;
+use Luckyseven\Bundle\LuckysevenDtoBundle\Interface\IDtoTransformer;
 
-abstract class DtoTransformer implements DtoTransformerInterface
+abstract class DtoTransformer implements IDtoTransformer
 {
     public function transformFromObjects(iterable $entities): iterable
     {

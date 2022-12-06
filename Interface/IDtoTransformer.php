@@ -2,11 +2,11 @@
 
 namespace Luckyseven\Bundle\LuckysevenDtoBundle\Interface;
 
-interface DtoTransformerInterface {
-    public function transformFromObject(DtoSerializableInterface $entity);
+interface IDtoTransformer {
+    public function transformFromObject(IDtoSerializable $entity);
 
     /**
-     * @param array<DtoSerializableInterface> $entities
+     * @param array<IDtoSerializable> $entities
      * @return array
      */
     public function transformFromObjects(iterable $entities): iterable;

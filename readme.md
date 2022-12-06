@@ -1,19 +1,19 @@
 # Luckyseven Validation Bundle
-Luckyseven Validation Bundle uses Symfony's Validation bundle and Rolleworks PasswordStrenghValidator Bundle
+Luckyseven Dto Bundle uses JSMSerializer Bundle
 
 ## Update composer.json and register the repositories
 ```
 {
     ...
     "repositories": [
-        {"type": "git", "url":  "https://github.com/giacomoto/validation-bundle.git"}
+        {"type": "git", "url":  "https://github.com/giacomoto/dto-bundle.git"}
     ],
     ...
     "extra": {
         "symfony": {
             ...
             "endpoint": [
-                "https://api.github.com/repos/giacomoto/validation-recipes/contents/index.json",
+                "https://api.github.com/repos/giacomoto/dto-recipes/contents/index.json",
                 "flex://defaults"
             ]
         }
@@ -23,43 +23,88 @@ Luckyseven Validation Bundle uses Symfony's Validation bundle and Rolleworks Pas
 
 ## Install
 ```
-composer require luckyseven/validation:dev-main
-composer recipes:install luckyseven/jwt-auth --force -v
+composer require luckyseven/dto:dev-main
+composer recipes:install luckyseven/dto --force -v
 ```
 
 ## Usage
-Create a Validator Constraints ex: ```Validation/CreateUserConstraint.php```
+Create a Dto and DtoTransformer Class <br>
+
+Example for User Entity:
+
+User Entity must implements IDtoTransformer
+
+Create file UserDto ex: ```Dto/DtoUser.php```<br>
 ```
 <?php
 
-namespace App\Validation\User;
+namespace App\Dto;
 
-use Luckyseven\Bundle\LuckysevenValidationBundle\Interface\ValidationConstraintInterface;
-use Luckyseven\Bundle\LuckysevenValidationBundle\Trait\EmailConstraintTrait;
-use Luckyseven\Bundle\LuckysevenValidationBundle\Trait\PasswordConstraintTrait;
-use Luckyseven\Bundle\LuckysevenValidationBundle\Trait\StringConstraintTrait;
-use Symfony\Component\Validator\Constraint;
-use Symfony\Component\Validator\Constraints\Collection;
+use JMS\Serializer\Annotation as Serializer;
+use Luckyseven\Bundle\LuckysevenDtoBundle\Interface\IDtoTransformer;
 
-class CreateUserConstraint extends Constraint implements ValidationConstraintInterface
+class UserDto implements IDtoTransformer
 {
-    use EmailConstraintTrait;
-    use StringConstraintTrait;
-    use PasswordConstraintTrait;
+    /**
+     * @Serializer\Type("int")
+     * @Serializer\Groups({"User"})
+     */
+    public int $id;
 
-    public function getConstraints(): Collection
+    /**
+     * @Serializer\Type("string")
+     * @Serializer\Groups({"User"})
+     */
+    public string $email;
+
+    /**
+     * @Serializer\Type("DateTimeImmutable<'timestamp'>")
+     * @Serializer\Groups({"User"})
+     */
+    public \DateTimeImmutable $createdAt;
+}
+```
+Create file UserDtoTransformer ex: ```Dto/DtoUser.php```<br>
+```
+<?php
+
+namespace App\Dto\Transformer;
+
+use App\Dto\UserDto;
+use App\Entity\User;
+use Luckyseven\Bundle\LuckysevenDtoBundle\Exception\DtoUnexpectedTypeException;
+use Luckyseven\Bundle\LuckysevenDtoBundle\Interface\IDtoTransformer;
+use Luckyseven\Bundle\LuckysevenDtoBundle\Transformer\DtoTransformer;
+
+class UserDtoTransformer extends DtoTransformer {
+
+    /**
+     * @param IDtoTransformer $entity
+     * @return UserDto
+     */
+    public function transformFromObject(IDtoTransformer $entity): UserDto
     {
-        return new Collection([
-            'email' => $this->isTypeEmail(User::class),
-            'password' => $this->isTypePassword(),
-            'lastName' => $this->isTypeString(),
-            'firstName' => $this->isTypeString(),
-        ]);
+        if (!$entity instanceof User) {
+            throw new DtoUnexpectedTypeException('Expected type of User but got ' . get_class($entity));
+        }
+
+        $dto = new UserDto();
+
+        $dto->id = $entity->getId();
+        $dto->email = $entity->getEmail();
+
+        $dto->lastName = $entity->getLastName();
+        $dto->firstName = $entity->getFirstName();
+
+        $dto->createdAt = $entity->getCreatedAt();
+        $dto->updatedAt = $entity->getUpdatedAt();
+
+        return $dto;
     }
 }
 ```
-validate the Request body against the previously created validator.<br>
-Ex: ```Controller/AuthController.php```
+Create Dto and pass it to serializer
+Ex: ```Controller/UserController.php```
 ```
 <?php
 
@@ -76,21 +121,25 @@ class AuthController extends AbstractController
 {
     ...
 
-    /**
-     * @throws ValidationException
-     */
-    public function register(
-        Request                     $request,
-        ValidationService           $validationService,
+    public function getUser(
+        User               $user,
+        UserDtoTransformer $userDtoTransformer,
     ): JsonResponse
     {
-        $body = $validationService->validate($request, CreateUserConstraint::class);
-    
-        // if validation success body will be an associative array
-        // if validation fails the ValidationException will be thrown
-        
-        // create user
         ...
+        
+        // create dto
+        $userDto = $userDtoTransformer->transformFromObject($user)
+        
+        // create serializationGroups
+        $serializationGroups = [ "User" ];
+
+        return new JsonResponse(json_decode(
+            $this->serializerService
+                ->setGroups($serializationGroups)
+                ->serialize(["data" => $userDto, '_meta' => $metadata])
+            , true), $status, $metadata);
+        
     }
 }
 ```
