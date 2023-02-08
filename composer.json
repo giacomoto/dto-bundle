@@ -6,7 +6,7 @@
     "version": "1.0",
     "require": {
         "jms/serializer-bundle": "^5.0",
-        "symfony/expression-language": "6.1.*"
+        "symfony/expression-language": "6.2.*"
     },
     "license": "MIT",
     "autoload": {
