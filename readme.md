@@ -21,6 +21,11 @@ Luckyseven Dto Bundle uses JSMSerializer Bundle
 }
 ```
 
+## Make the repository trusted
+```bash
+git config --global --add safe.directory /var/www/html/vendor/luckyseven/dto
+```
+
 ## Install
 ```
 composer require luckyseven/dto:dev-main
