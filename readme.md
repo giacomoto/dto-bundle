@@ -1,4 +1,4 @@
-# Luckyseven Validation Bundle
+# Luckyseven DTO Bundle
 Luckyseven Dto Bundle uses JSMSerializer Bundle
 
 ## Update composer.json and register the repositories
